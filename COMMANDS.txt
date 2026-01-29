@@ -1,0 +1,76 @@
+===========================================
+DEPLOYMENT COMMANDS - COPY & PASTE
+===========================================
+
+STEP 1: Create Repository on GitHub
+------------------------------------
+Go to: https://github.com/new
+
+Repository name: marketclassifer
+Description: Market Movement Classifier - ML Stock Prediction
+Public: Yes
+Initialize: NO (leave all checkboxes unchecked)
+
+Click: "Create repository"
+
+
+STEP 2: Push Code to GitHub
+-----------------------------
+cd market-classifier-main
+git push -u origin main
+
+(If it asks for credentials, the repository was created successfully!)
+
+
+STEP 3: Deploy on Render
+--------------------------
+Go to: https://dashboard.render.com/
+
+Click: "New +" → "Blueprint"
+Connect: GitHub
+Select: canvameet/marketclassifer
+Click: "Apply"
+
+Wait 3-5 minutes...
+
+
+STEP 4: Test Your App
+-----------------------
+Health Check:
+curl https://market-classifier-api.onrender.com/api/health
+
+Predict Stocks:
+curl -X POST https://market-classifier-api.onrender.com/api/predict -H "Content-Type: application/json" -d "{\"tickers\": \"AAPL,TSLA\"}"
+
+Frontend:
+Open browser: https://market-classifier-api.onrender.com/
+
+
+===========================================
+URLS
+===========================================
+GitHub Repo: https://github.com/canvameet/marketclassifer
+Render Dashboard: https://dashboard.render.com/
+Your App: https://market-classifier-api.onrender.com
+
+
+===========================================
+TROUBLESHOOTING
+===========================================
+
+Push Failed?
+- Make sure repository exists on GitHub
+- Check: https://github.com/canvameet/marketclassifer
+
+Build Failed?
+- Check Render logs in dashboard
+- Verify requirements.txt is complete
+
+App Not Working?
+- Check Render logs
+- Wait for first request (30-60 seconds on free tier)
+
+
+===========================================
+DONE! 🎉
+===========================================
