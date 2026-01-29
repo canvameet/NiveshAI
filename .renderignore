@@ -1,0 +1,32 @@
+# Render ignore file - exclude unnecessary files from deployment
+
+# Development files
+*.ipynb
+.ipynb_checkpoints/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# Local data and results (will be regenerated)
+results/
+models/*.json
+
+# Git
+.git/
+.gitignore
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Documentation (optional - remove if you want docs deployed)
+# HACKATHON_SUMMARY.md
+# QA_EXPLAINED.md
+
+# Demo files
+demo.py
+Main.ipynb

@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: market-classifier-api
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: python server.py
+    pythonVersion: 3.11.14
+    envVars:
+      - key: FINANCIAL_NEWS_API_KEY
+        value: demo
+      - key: PYTHON_VERSION
+        value: 3.11.14
