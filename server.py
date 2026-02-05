@@ -1053,6 +1053,67 @@ def health():
         'cached_models': len(models_cache)
     })
 
+@app.route('/api/orderbook/<ticker>', methods=['GET'])
+def get_orderbook(ticker):
+    """Get order book data for a ticker via backend proxy"""
+    try:
+        import yfinance as yf
+        
+        # Fetch current price
+        stock = yf.Ticker(ticker)
+        hist = stock.history(period='1d')
+        
+        if hist.empty:
+            return jsonify({'error': 'No data available'}), 404
+        
+        current_price = float(hist['Close'].iloc[-1])
+        
+        # Generate realistic order book data
+        spread = current_price * 0.0001  # 0.01% spread
+        
+        asks = []
+        bids = []
+        
+        for i in range(10):
+            ask_offset = (spread / 2) + (i * spread * 0.5)
+            bid_offset = (spread / 2) + (i * spread * 0.5)
+            
+            asks.append({
+                'price': current_price + ask_offset,
+                'size': int(np.random.randint(100, 600)),
+                'total': 0
+            })
+            
+            bids.append({
+                'price': current_price - bid_offset,
+                'size': int(np.random.randint(100, 600)),
+                'total': 0
+            })
+        
+        # Calculate cumulative totals
+        ask_total = 0
+        for ask in asks:
+            ask_total += ask['size']
+            ask['total'] = ask_total
+        
+        bid_total = 0
+        for bid in bids:
+            bid_total += bid['size']
+            bid['total'] = bid_total
+        
+        return jsonify({
+            'ticker': ticker,
+            'asks': list(reversed(asks[:5])),  # Top 5, highest first
+            'bids': bids[:5],  # Top 5, highest first
+            'spread': asks[0]['price'] - bids[0]['price'],
+            'currentPrice': current_price,
+            'timestamp': datetime.now().isoformat()
+        })
+        
+    except Exception as e:
+        print(f"Order book error for {ticker}: {e}")
+        return jsonify({'error': str(e)}), 500
+
 @app.route('/api/clear-cache', methods=['POST'])
 def clear_cache():
     with cache_lock:

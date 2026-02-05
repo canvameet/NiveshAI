@@ -825,63 +825,26 @@
 
         async function fetchOrderBook(ticker) {
             try {
-                // Using Yahoo Finance API via yfinance-like endpoint
-                // This simulates order book data from current price
-                const response = await fetch(`https://query1.finance.yahoo.com/v8/finance/chart/${ticker}?interval=1m&range=1d`);
+                // Use backend API to avoid CORS issues
+                const response = await fetch(`${API_BASE}/orderbook/${ticker}`);
+                
+                if (!response.ok) {
+                    throw new Error('Failed to fetch order book');
+                }
+                
                 const data = await response.json();
                 
-                if (!data.chart || !data.chart.result || !data.chart.result[0]) {
-                    throw new Error('No data available');
+                if (data.error) {
+                    throw new Error(data.error);
                 }
-
-                const result = data.chart.result[0];
-                const currentPrice = result.meta.regularMarketPrice;
-                
-                // Generate realistic order book data around current price
-                const spread = currentPrice * 0.0001; // 0.01% spread
-                const askPrice = currentPrice + (spread / 2);
-                const bidPrice = currentPrice - (spread / 2);
-                
-                // Generate 10 levels of asks and bids
-                const asks = [];
-                const bids = [];
-                
-                for (let i = 0; i < 10; i++) {
-                    const askOffset = (spread / 2) + (i * spread * 0.5);
-                    const bidOffset = (spread / 2) + (i * spread * 0.5);
-                    
-                    asks.push({
-                        price: currentPrice + askOffset,
-                        size: Math.floor(Math.random() * 500) + 100,
-                        total: 0
-                    });
-                    
-                    bids.push({
-                        price: currentPrice - bidOffset,
-                        size: Math.floor(Math.random() * 500) + 100,
-                        total: 0
-                    });
-                }
-                
-                // Calculate cumulative totals
-                let askTotal = 0;
-                asks.forEach(ask => {
-                    askTotal += ask.size;
-                    ask.total = askTotal;
-                });
-                
-                let bidTotal = 0;
-                bids.forEach(bid => {
-                    bidTotal += bid.size;
-                    bid.total = bidTotal;
-                });
                 
                 return {
-                    ticker,
-                    asks: asks.slice(0, 5).reverse(), // Show top 5, highest first
-                    bids: bids.slice(0, 5), // Show top 5, highest first
-                    spread: asks[0].price - bids[0].price,
-                    timestamp: new Date()
+                    ticker: data.ticker,
+                    asks: data.asks,
+                    bids: data.bids,
+                    spread: data.spread,
+                    currentPrice: data.currentPrice,
+                    timestamp: new Date(data.timestamp)
                 };
             } catch (error) {
                 console.error('Order book fetch error:', error);
