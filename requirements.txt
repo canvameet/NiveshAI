@@ -1,4 +1,4 @@
-# Market Movement Classifier - Python Dependencies
+# NiveshAI - Python Dependencies
 # Core ML and Data Science
 pandas==2.2.2
 numpy==1.26.4

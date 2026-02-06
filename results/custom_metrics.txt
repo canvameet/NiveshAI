@@ -2,30 +2,30 @@ MARKET MOVEMENT CLASSIFIER - Custom Selection
 ======================================================================
 
 Category: CUSTOM
-Tickers: NVDA
+Tickers: AAPL
 SDG Aligned: No
 
-Training Accuracy:   0.9880
-Test Accuracy:       0.5584
-Test F1-Score:       0.5321
-Test ROC-AUC:        0.5894
+Training Accuracy:   0.9967
+Test Accuracy:       0.5368
+Test F1-Score:       0.6192
+Test ROC-AUC:        0.5465
 
 Confusion Matrix:
-[[71 35]
- [67 58]]
+[[37 70]
+ [37 87]]
 
 Classification Report:
               precision    recall  f1-score   support
 
-           0       0.51      0.67      0.58       106
-           1       0.62      0.46      0.53       125
+           0       0.50      0.35      0.41       107
+           1       0.55      0.70      0.62       124
 
-    accuracy                           0.56       231
-   macro avg       0.57      0.57      0.56       231
-weighted avg       0.57      0.56      0.55       231
+    accuracy                           0.54       231
+   macro avg       0.53      0.52      0.51       231
+weighted avg       0.53      0.54      0.52       231
 
 
 Next Day Prediction:
-Ticker: NVDA
-Movement: UP
-Confidence: 84.64%
+Ticker: AAPL
+Movement: DOWN
+Confidence: 81.38%

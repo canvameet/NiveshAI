@@ -334,7 +334,25 @@ class FeatureEngineer:
         
         return df
     
-    def create_all_features(self, df, ticker_prefix='', market_data=None, ticker_dfs_dict=None):
+    def create_news_sentiment_features(self, df, news_sentiment):
+        """Create news sentiment features for prediction"""
+        # Add news sentiment score as a feature
+        df['news_sentiment'] = news_sentiment
+        
+        # Create interaction features with technical indicators
+        if 'rsi_14' in df.columns:
+            df['news_rsi_interaction'] = df['news_sentiment'] * df['rsi_14']
+        
+        if 'volatility_20d' in df.columns:
+            df['news_volatility_interaction'] = df['news_sentiment'] * df['volatility_20d']
+        
+        # Create sentiment momentum (how sentiment aligns with price momentum)
+        if 'return_1d' in df.columns:
+            df['sentiment_momentum_alignment'] = df['news_sentiment'] * df['return_1d']
+        
+        return df
+    
+    def create_all_features(self, df, ticker_prefix='', market_data=None, ticker_dfs_dict=None, news_sentiment=None):
         """Create all features for a single ticker"""
         close_col = f'{ticker_prefix}Close' if ticker_prefix else 'Close'
         high_col = f'{ticker_prefix}High' if ticker_prefix else 'High'
@@ -364,6 +382,10 @@ class FeatureEngineer:
         # Correlation features (if multiple tickers available)
         if ticker_dfs_dict is not None:
             df = self.create_correlation_features(df, ticker_dfs_dict, close_col)
+        
+        # News sentiment features (if available)
+        if news_sentiment is not None:
+            df = self.create_news_sentiment_features(df, news_sentiment)
         
         # Final cleanup - replace inf and extreme values
         df = df.replace([np.inf, -np.inf], np.nan)

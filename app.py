@@ -13,7 +13,7 @@ def serve_static(path):
 
 if __name__ == '__main__':  
     print("="*70)
-    print("MARKET MOVEMENT CLASSIFIER - FRONTEND SERVER")
+    print("NIVESHAI - FRONTEND SERVER")
     print("="*70)
     print("Frontend running on: http://localhost:8080")
     print("Make sure backend API is running on: http://localhost:5000")

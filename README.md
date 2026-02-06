@@ -1,6 +1,6 @@
-# Market Movement Classifier  
+# NiveshAI  
 
-The **Market Movement Classifier** is an AI-based stock prediction system developed by **Team Aimers**.  
+The **NiveshAI** is an AI-based stock prediction system developed by **Aimers AI Solutions**.  
 It uses a trained **XGBoost model** to predict next-day stock movements (UP/DOWN) and provides **real-time charts**, **latest stock data**, and **financial news** through an integrated full-stack web application.
 
 > **🏆 Hackathon Ready:** See [HACKATHON_SUMMARY.md](HACKATHON_SUMMARY.md) for presentation summary and [QUICK_START.md](QUICK_START.md) for quick demo guide.
@@ -28,7 +28,7 @@ It uses a trained **XGBoost model** to predict next-day stock movements (UP/DOWN
 ---
 
 ##  1. Overview  
-The Market Movement Classifier is a **binary classification model** that predicts whether a stock’s next-day closing price will be **UP or DOWN**.
+NiveshAI is a **binary classification model** that predicts whether a stock’s next-day closing price will be **UP or DOWN**.
 
 It combines:
 - **Machine Learning Pipeline (main.py)** – Data loading, feature engineering, XGBoost training, and visualization  
@@ -39,7 +39,7 @@ It combines:
 ---
 
 ##  2. Problem Statement  
-Build a trained ML model using **2 years of historical time-series stock data** to predict whether the next day’s closing price will go **UP or DOWN**.
+Build a trained ML model using **5 years of historical time-series stock data** to predict whether the next day’s closing price will go **UP or DOWN**.
 
 - 🎯 **Next-Day Predictions** - Binary UP/DOWN classification with confidence scores
 - 📊 **250+ Technical Features** - RSI, MACD, Bollinger Bands, ADX, Stochastic, Williams %R, Fibonacci, Ichimoku Cloud
@@ -47,7 +47,7 @@ Build a trained ML model using **2 years of historical time-series stock data** 
 - 🧠 **Buy/Sell/Hold Guidance** - Actionable trade opinions with confidence, risk note, and expected move
 - 🔍 **SHAP Explainability** - Model interpretability - shows WHY predictions are made (judges love this!)
 - 📈 **Backtesting Framework** - Historical performance validation with realistic trading simulation
-- 📈 **Real-Time Data** - Downloads latest 2-year historical data via Yahoo Finance
+- 📈 **Real-Time Data** - Downloads latest 5-year historical data via Yahoo Finance
 - 🌍 **SDG Alignment** - Supports 4 UN SDG categories (#3, #7, #9, #13) for +20% bonus
 - 🔄 **Multi-Ticker Support** - Analyze multiple stocks simultaneously with cross-ticker correlation
 - 📉 **Interactive Visualizations** - Confusion matrix, ROC curve, feature importance, SHAP plots, backtest results
@@ -73,7 +73,7 @@ Build a trained ML model using **2 years of historical time-series stock data** 
 ##  4. Project Structure  
 
 ```
-market-classifier/
+niveshai/
 │
 ├── app.py                          # Frontend web server (Flask)
 ├── server.py                       # Backend API (Flask + ML)
@@ -161,12 +161,12 @@ You can also run the services individually:
 
 ```bash
 # Backend only
-docker build -f Dockerfile.backend -t market-classifier-backend .
-docker run -p 5000:5000 market-classifier-backend
+docker build -f Dockerfile.backend -t niveshai-backend .
+docker run -p 5000:5000 niveshai-backend
 
 # Frontend only (expects backend mapped locally on :5000)
-docker build -f Dockerfile.frontend -t market-classifier-frontend .
-docker run -p 8080:8080 market-classifier-frontend
+docker build -f Dockerfile.frontend -t niveshai-frontend .
+docker run -p 8080:8080 niveshai-frontend
 ```
 
 > The browser code calls `http://localhost:5000/api/...`, so make sure the backend container is published on that host port when running the frontend.
@@ -539,3 +539,4 @@ Airport School, Ahmedabad (Gujarat)
 https://github.com/jai-git4208/market-classifier  
 
 Built with ❤️ by **Meet Ratwani  & Jaimin Pansal**  
+

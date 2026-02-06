@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Stock Predictor</title>
+    <title>NiveshAI</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -617,7 +617,7 @@
                     <div class="loading-spinner mx-auto mb-4"></div>
                     <h3 class="text-lg font-semibold text-black dark:text-white mb-2">Analyzing Market Data</h3>
                     <p class="text-black dark:text-white text-sm max-w-xs mx-auto">
-                        Fetching 2 years of history, engineering features, and running XGBoost models...
+                        Fetching 5 years of history, engineering features, and running XGBoost models...
                     </p>
                 </div>
             `;
@@ -685,7 +685,7 @@
                 renderStocks();
                 renderMacroOverlay(data.macroEvents || [], data.macroRisk);
                 renderNewsSection();
-                
+
                 // Update order book with first ticker
                 const firstTicker = query.split(',')[0].trim().toUpperCase();
                 startOrderBookUpdates(firstTicker);
@@ -757,7 +757,7 @@
 
                         <div class="space-y-8">
                             ${[
-                        { title: 'Price History', src: data.priceHistory, desc: '2-year historical price trend.' },
+                        { title: 'Price History', src: data.priceHistory, desc: '5-year historical price trend.' },
                         { title: 'Confusion Matrix', src: data.confusionMatrix, desc: 'Prediction accuracy breakdown.' },
                         { title: 'ROC Curve', src: data.rocCurve, desc: 'True positive vs false positive rate.' },
 
@@ -827,17 +827,17 @@
             try {
                 // Use backend API to avoid CORS issues
                 const response = await fetch(`${API_BASE}/orderbook/${ticker}`);
-                
+
                 if (!response.ok) {
                     throw new Error('Failed to fetch order book');
                 }
-                
+
                 const data = await response.json();
-                
+
                 if (data.error) {
                     throw new Error(data.error);
                 }
-                
+
                 return {
                     ticker: data.ticker,
                     asks: data.asks,
@@ -854,37 +854,48 @@
 
         function renderOrderBook(data) {
             if (!data) return;
-            
+
             const asksContainer = document.getElementById('orderbook-asks');
             const bidsContainer = document.getElementById('orderbook-bids');
             const spreadElement = document.getElementById('orderbook-spread');
             const timeElement = document.getElementById('orderbook-time');
             const tickerElement = document.getElementById('orderbook-ticker');
-            
+
             // Update ticker
             tickerElement.textContent = data.ticker;
-            
+
+            // Detect currency based on ticker suffix
+            const isIndian = data.ticker.endsWith('.NS') || data.ticker.endsWith('.BO');
+            const currencySymbol = isIndian ? '₹' : '$';
+
             // Render asks (sell orders) - red
             asksContainer.innerHTML = data.asks.map(ask => `
                 <div class="flex justify-between items-center text-xs py-1 px-2 rounded bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800">
-                    <span class="font-mono text-red-600 dark:text-red-400 font-semibold">$${ask.price.toFixed(2)}</span>
+                    <span class="font-mono text-red-600 dark:text-red-400 font-semibold">${currencySymbol}${ask.price.toFixed(2)}</span>
                     <span class="font-mono text-black dark:text-white">${ask.size}</span>
                     <span class="font-mono text-black dark:text-white opacity-60 text-[10px]">${ask.total}</span>
                 </div>
             `).join('');
-            
+
             // Render bids (buy orders) - green
             bidsContainer.innerHTML = data.bids.map(bid => `
                 <div class="flex justify-between items-center text-xs py-1 px-2 rounded bg-green-50 dark:bg-green-950 border border-green-200 dark:border-green-800">
-                    <span class="font-mono text-green-600 dark:text-green-400 font-semibold">$${bid.price.toFixed(2)}</span>
+                    <span class="font-mono text-green-600 dark:text-green-400 font-semibold">${currencySymbol}${bid.price.toFixed(2)}</span>
                     <span class="font-mono text-black dark:text-white">${bid.size}</span>
                     <span class="font-mono text-black dark:text-white opacity-60 text-[10px]">${bid.total}</span>
                 </div>
             `).join('');
-            
-            // Update spread
-            spreadElement.textContent = `$${data.spread.toFixed(4)}`;
-            
+
+            // Calculate buy/sell percentage distribution based on total volume
+            const totalBuyVolume = data.bids.reduce((sum, bid) => sum + bid.size, 0);
+            const totalSellVolume = data.asks.reduce((sum, ask) => sum + ask.size, 0);
+            const totalVolume = totalBuyVolume + totalSellVolume;
+
+            const buyPercentage = totalVolume > 0 ? ((totalBuyVolume / totalVolume) * 100).toFixed(1) : '50.0';
+            const sellPercentage = totalVolume > 0 ? ((totalSellVolume / totalVolume) * 100).toFixed(1) : '50.0';
+
+            spreadElement.innerHTML = `<span class="text-green-600 dark:text-green-400">${buyPercentage}% (Buy)</span> / <span class="text-red-600 dark:text-red-400">${sellPercentage}% (Sell)</span>`;
+
             // Update timestamp
             const time = data.timestamp.toLocaleTimeString();
             timeElement.textContent = time;
@@ -899,15 +910,15 @@
 
         function startOrderBookUpdates(ticker = 'AAPL') {
             currentOrderbookTicker = ticker;
-            
+
             // Clear existing interval
             if (orderbookInterval) {
                 clearInterval(orderbookInterval);
             }
-            
+
             // Initial fetch
             updateOrderBook();
-            
+
             // Update every 3 seconds
             orderbookInterval = setInterval(updateOrderBook, 3000);
         }
@@ -932,7 +943,7 @@
             renderSignalRadar();
             renderNewsSection();
             initWhatIfSliders();
-            
+
             // Start order book updates
             startOrderBookUpdates('AAPL');
 
@@ -952,10 +963,9 @@
             <div class="flex items-center gap-3">
 
                 <div>
-                    <h1 class="text-2xl font-bold tracking-tight">Market<span
-                            class="text-black dark:text-white">Classifier</span></h1>
-                    <p class="text-xs text-black dark:text-white font-medium tracking-wide">PREDICTIVE
-                        ANALYTICS</p>
+                    <h1 class="text-2xl font-bold tracking-tight"><span
+                            class="text-black dark:text-white">NiveshAI</span></h1>
+                    <p class="text-xs text-black dark:text-white font-medium tracking-wide">INVEST SMARTER</p>
                 </div>
             </div>
 
@@ -1038,13 +1048,15 @@
                         <h3 class="font-semibold flex items-center gap-2 text-black dark:text-white">
                             <i data-lucide="book-open" class="w-4 h-4 text-black dark:text-white"></i> Order Book
                         </h3>
-                        <span id="orderbook-ticker" class="text-xs font-mono font-bold bg-white dark:bg-black text-black dark:text-white border-2 border-black dark:border-white px-2 py-0.5 rounded-full">AAPL</span>
+                        <span id="orderbook-ticker"
+                            class="text-xs font-mono font-bold bg-white dark:bg-black text-black dark:text-white border-2 border-black dark:border-white px-2 py-0.5 rounded-full">AAPL</span>
                     </div>
-                    
+
                     <div class="space-y-3">
                         <!-- Asks (Sell Orders) -->
                         <div>
-                            <div class="text-xs font-semibold mb-2 text-red-600 dark:text-red-400 flex items-center gap-1">
+                            <div
+                                class="text-xs font-semibold mb-2 text-red-600 dark:text-red-400 flex items-center gap-1">
                                 <span>ASKS</span>
                                 <span class="text-[10px] opacity-60">(Sell)</span>
                             </div>
@@ -1053,17 +1065,18 @@
                             </div>
                         </div>
 
-                        <!-- Spread -->
+                        <!-- Order Imbalance -->
                         <div class="py-2 border-y-2 border-black dark:border-white">
                             <div class="flex justify-between items-center text-xs">
-                                <span class="text-black dark:text-white font-medium">Spread</span>
-                                <span id="orderbook-spread" class="font-mono font-bold text-black dark:text-white">$0.00</span>
+                                <span class="text-black dark:text-white font-medium">Order Imbalance</span>
+                                <span id="orderbook-spread" class="font-mono font-bold text-xs"></span>
                             </div>
                         </div>
 
                         <!-- Bids (Buy Orders) -->
                         <div>
-                            <div class="text-xs font-semibold mb-2 text-green-600 dark:text-green-400 flex items-center gap-1">
+                            <div
+                                class="text-xs font-semibold mb-2 text-green-600 dark:text-green-400 flex items-center gap-1">
                                 <span>BIDS</span>
                                 <span class="text-[10px] opacity-60">(Buy)</span>
                             </div>
@@ -1074,7 +1087,8 @@
 
                         <!-- Last Update -->
                         <div class="pt-2 border-t-2 border-black dark:border-white">
-                            <div class="flex justify-between items-center text-[10px] text-black dark:text-white opacity-60">
+                            <div
+                                class="flex justify-between items-center text-[10px] text-black dark:text-white opacity-60">
                                 <span>Last Update</span>
                                 <span id="orderbook-time">--:--:--</span>
                             </div>
@@ -1131,7 +1145,7 @@
             class="mt-12 pt-6 border-t-2 border-black dark:border-white text-center text-sm text-black dark:text-white">
             <p class="flex items-center justify-center gap-2">
                 <i data-lucide="cpu" class="w-4 h-4"></i>
-                Powered by <span class="font-medium text-black dark:text-white">Team Aimers
+                Powered by <span class="font-medium text-black dark:text-white">Aimers AI Solutions
                 </span>
             </p>
         </footer>

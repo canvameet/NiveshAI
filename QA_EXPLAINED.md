@@ -1,4 +1,4 @@
-# 🎓 Market Movement Classifier - Q&A for Everyone!
+# 🎓 NiveshAI - Q&A for Everyone!
 ## Questions and Answers Explained Like You're 5 Years Old 🧒
 
 ---
@@ -9,7 +9,7 @@
 **Answer:** It tries to guess if a stock price will go UP ↑ or DOWN ↓ tomorrow!
 
 **5-Year-Old Explanation:** 🍎
-> Imagine you have a piggy bank, and every day the number of coins inside changes. Sometimes more coins appear, sometimes some disappear. This project is like a **smart helper robot** that looks at what happened with the coins for the last 2 years and tries to guess: "Will there be MORE coins tomorrow or FEWER coins?"
+> Imagine you have a piggy bank, and every day the number of coins inside changes. Sometimes more coins appear, sometimes some disappear. This project is like a **smart helper robot** that looks at what happened with the coins for the last 5 years and tries to guess: "Will there be MORE coins tomorrow or FEWER coins?"
 
 ---
 
@@ -37,7 +37,7 @@
 **Answer:** It downloads stock price information from the internet (Yahoo Finance).
 
 **5-Year-Old Explanation:** 📱
-> Imagine you want to know how tall all your friends grew each day for 2 years. `data_loader.py` is like calling each friend's mom and asking: "How tall was Tommy on January 1st? January 2nd? January 3rd...?" and writing ALL those numbers in a big notebook!
+> Imagine you want to know how tall all your friends grew each day for 5 years. `data_loader.py` is like calling each friend's mom and asking: "How tall was Tommy on January 1st? January 2nd? January 3rd...?" and writing ALL those numbers in a big notebook!
 >
 > It gets information like:
 > - **Open** - The price when the store opened in the morning
@@ -48,7 +48,7 @@
 
 **Code Example:**
 ```python
-# This downloads 2 years of Apple stock data!
+# This downloads 5 years of Apple stock data!
 loader = CleanEnergyDataLoader(custom_tickers=['AAPL'])
 data = loader.download_data(period='2y')
 ```
@@ -386,7 +386,7 @@ Website sends request to server 📤
        ↓
 server.py checks: "Do I have this cached?" 🤔
        ↓
-If NO: Download 2 years of AAPL data from Yahoo Finance 📥
+If NO: Download 5 years of AAPL data from Yahoo Finance 📥
        ↓
 Create 250+ features (RSI, MACD, Bollinger Bands...) 🧮
        ↓
@@ -1114,4 +1114,5 @@ df['vwvr'] = (df['return_1d'] * df['volume_ratio']) / df['volatility_20d']
 
 *Congratulations on making it through the ADVANCED section!* 🏆
 
-*You now understand the Market Classifier at a production-engineering level!*
+*You now understand the NiveshAI at a production-engineering level!*
+

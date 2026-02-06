@@ -298,7 +298,7 @@ class XGBoostMarketClassifier:
         plt.plot([0, 1], [0, 1], 'k--', label='Random Classifier')
         plt.xlabel('False Positive Rate')
         plt.ylabel('True Positive Rate')
-        plt.title('ROC Curve - Market Movement Classifier')
+        plt.title('ROC Curve - NiveshAI')
         plt.legend()
         plt.grid(alpha=0.3)
         plt.tight_layout()

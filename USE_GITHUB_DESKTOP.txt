@@ -1,0 +1,59 @@
+========================================
+EASIEST SOLUTION: USE GITHUB DESKTOP
+========================================
+
+Your token doesn't have push permissions.
+The fastest way to push your code is using GitHub Desktop.
+
+STEP 1: Download GitHub Desktop
+--------------------------------
+https://desktop.github.com/
+
+STEP 2: Install and Login
+--------------------------
+- Install GitHub Desktop
+- Open it
+- File → Options → Accounts
+- Sign in with: canvameet
+
+STEP 3: Add Your Repository
+----------------------------
+- File → Add Local Repository
+- Browse to: C:\Users\Meet\Downloads\market-classifier-main\market-classifier-main
+- Click "Add Repository"
+
+STEP 4: Publish to GitHub
+--------------------------
+- You'll see "Publish repository" button
+- Click it
+- Repository name: marketclassifer
+- Make sure "Keep this code private" is UNCHECKED
+- Click "Publish repository"
+
+DONE! ✅
+--------
+Your code is now on GitHub!
+Check: https://github.com/canvameet/marketclassifer
+
+NEXT: Deploy on Render
+-----------------------
+1. Go to: https://dashboard.render.com/
+2. Click "New +" → "Blueprint"
+3. Connect GitHub
+4. Select: canvameet/marketclassifer
+5. Click "Apply"
+6. Wait 3-5 minutes
+
+Your app will be live at:
+https://market-classifier-api.onrender.com
+
+========================================
+WHY GITHUB DESKTOP?
+========================================
+- No token issues
+- Visual interface
+- Automatic authentication
+- Works every time
+- Takes 2 minutes
+
+========================================

@@ -158,7 +158,7 @@ def main(category='SDG_CLEAN_ENERGY', custom_tickers=None, use_significant_moves
     os.makedirs('results', exist_ok=True)
     
     print("="*70)
-    print("MULTI-CATEGORY MARKET MOVEMENT CLASSIFIER")
+    print("NIVESHAI")
     print("="*70)
     
     print("\n[1/6] Loading Data...")
@@ -339,7 +339,7 @@ def main(category='SDG_CLEAN_ENERGY', custom_tickers=None, use_significant_moves
     
     metrics_file = f'results/{category.lower()}_metrics.txt'
     with open(metrics_file, 'w') as f:
-        f.write(f"MARKET MOVEMENT CLASSIFIER - {loader.description}\n")
+        f.write(f"NIVESHAI - {loader.description}\n")
         f.write("="*70 + "\n\n")
         f.write(f"Category: {category}\n")
         f.write(f"Tickers: {', '.join(loader.tickers)}\n")
@@ -461,7 +461,7 @@ def run_multiple_categories(categories=None):
 if __name__ == "__main__":
     import argparse
     
-    parser = argparse.ArgumentParser(description='Market Movement Classifier')
+    parser = argparse.ArgumentParser(description='NiveshAI')
     parser.add_argument('--category', type=str, default='SDG_CLEAN_ENERGY',
                       help='Category to analyze (or use --list to see options)')
     parser.add_argument('--list', action='store_true',

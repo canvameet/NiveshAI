@@ -21,7 +21,7 @@ def print_header(text):
 def demo():
     """Run a quick demo for hackathon judges"""
     
-    print_header("🚀 MARKET MOVEMENT CLASSIFIER - HACKATHON DEMO")
+    print_header("🚀 NIVESHAI - HACKATHON DEMO")
     
     print("""
 This demo showcases:

@@ -1,0 +1,463 @@
+<!-- Order Book Component - Add this to your index.html -->
+
+<style>
+    .order-book-container {
+        background: white;
+        border-radius: 12px;
+        padding: 24px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        margin: 20px 0;
+    }
+    
+    .order-book-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        padding-bottom: 16px;
+        border-bottom: 2px solid #e5e7eb;
+    }
+    
+    .order-book-title {
+        font-size: 20px;
+        font-weight: 700;
+        color: #1f2937;
+    }
+    
+    .order-book-ticker {
+        font-size: 24px;
+        font-weight: 800;
+        color: #3b82f6;
+    }
+    
+    .order-book-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 24px;
+        margin-bottom: 24px;
+    }
+    
+    .order-book-side {
+        border-radius: 8px;
+        overflow: hidden;
+    }
+    
+    .order-book-side-header {
+        padding: 12px 16px;
+        font-weight: 700;
+        font-size: 14px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .bids-header {
+        background: #10b981;
+        color: white;
+    }
+    
+    .asks-header {
+        background: #ef4444;
+        color: white;
+    }
+    
+    .order-book-levels {
+        max-height: 400px;
+        overflow-y: auto;
+    }
+    
+    .order-level {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        padding: 8px 16px;
+        font-size: 13px;
+        border-bottom: 1px solid #f3f4f6;
+        position: relative;
+        transition: background 0.2s;
+    }
+    
+    .order-level:hover {
+        background: #f9fafb;
+    }
+    
+    .order-level-bg {
+        position: absolute;
+        top: 0;
+        right: 0;
+        height: 100%;
+        opacity: 0.1;
+        transition: width 0.3s;
+    }
+    
+    .bid-level .order-level-bg {
+        background: #10b981;
+    }
+    
+    .ask-level .order-level-bg {
+        background: #ef4444;
+    }
+    
+    .order-price {
+        font-weight: 600;
+        z-index: 1;
+    }
+    
+    .bid-level .order-price {
+        color: #059669;
+    }
+    
+    .ask-level .order-price {
+        color: #dc2626;
+    }
+    
+    .order-quantity {
+        color: #6b7280;
+        text-align: center;
+        z-index: 1;
+    }
+    
+    .order-value {
+        color: #4b5563;
+        text-align: right;
+        font-weight: 500;
+        z-index: 1;
+    }
+    
+    .order-book-summary {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 16px;
+        margin-top: 24px;
+        padding-top: 24px;
+        border-top: 2px solid #e5e7eb;
+    }
+    
+    .summary-card {
+        background: #f9fafb;
+        padding: 16px;
+        border-radius: 8px;
+        border-left: 4px solid #3b82f6;
+    }
+    
+    .summary-label {
+        font-size: 12px;
+        color: #6b7280;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 4px;
+    }
+    
+    .summary-value {
+        font-size: 20px;
+        font-weight: 700;
+        color: #1f2937;
+    }
+    
+    .summary-card.buy {
+        border-left-color: #10b981;
+    }
+    
+    .summary-card.sell {
+        border-left-color: #ef4444;
+    }
+    
+    .pressure-indicator {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 16px;
+        background: #f9fafb;
+        border-radius: 8px;
+        margin-top: 16px;
+    }
+    
+    .pressure-bar {
+        flex: 1;
+        height: 24px;
+        background: linear-gradient(to right, #ef4444 0%, #fbbf24 50%, #10b981 100%);
+        border-radius: 12px;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .pressure-marker {
+        position: absolute;
+        top: -4px;
+        width: 4px;
+        height: 32px;
+        background: #1f2937;
+        border-radius: 2px;
+        transition: left 0.5s;
+    }
+    
+    .pressure-label {
+        font-weight: 700;
+        font-size: 14px;
+        min-width: 150px;
+        text-align: center;
+        padding: 8px 16px;
+        border-radius: 6px;
+    }
+    
+    .pressure-label.buy {
+        background: #d1fae5;
+        color: #065f46;
+    }
+    
+    .pressure-label.sell {
+        background: #fee2e2;
+        color: #991b1b;
+    }
+    
+    .pressure-label.neutral {
+        background: #e5e7eb;
+        color: #374151;
+    }
+    
+    .signal-badge {
+        display: inline-block;
+        padding: 6px 12px;
+        border-radius: 6px;
+        font-weight: 700;
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .signal-badge.strong-buy {
+        background: #d1fae5;
+        color: #065f46;
+    }
+    
+    .signal-badge.buy {
+        background: #dbeafe;
+        color: #1e40af;
+    }
+    
+    .signal-badge.hold {
+        background: #e5e7eb;
+        color: #374151;
+    }
+    
+    .signal-badge.sell {
+        background: #fed7aa;
+        color: #92400e;
+    }
+    
+    .signal-badge.strong-sell {
+        background: #fee2e2;
+        color: #991b1b;
+    }
+    
+    .refresh-button {
+        padding: 8px 16px;
+        background: #3b82f6;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background 0.2s;
+    }
+    
+    .refresh-button:hover {
+        background: #2563eb;
+    }
+    
+    .refresh-button:disabled {
+        background: #9ca3af;
+        cursor: not-allowed;
+    }
+</style>
+
+<script>
+    // Order Book JavaScript Functions
+    
+    let orderBookRefreshInterval = null;
+    
+    async function fetchOrderBook(ticker, depth = 10) {
+        try {
+            const response = await fetch(`${API_BASE}/order-book/${ticker}?depth=${depth}`);
+            if (!response.ok) throw new Error('Failed to fetch order book');
+            return await response.json();
+        } catch (error) {
+            console.error('Order book fetch error:', error);
+            return null;
+        }
+    }
+    
+    function renderOrderBook(data, containerId) {
+        const container = document.getElementById(containerId);
+        if (!container || !data) return;
+        
+        const analysis = data.analysis;
+        const signal = data.signal;
+        
+        // Calculate max value for bar width
+        const maxBidValue = Math.max(...data.bids.map(b => b.value));
+        const maxAskValue = Math.max(...data.asks.map(a => a.value));
+        const maxValue = Math.max(maxBidValue, maxAskValue);
+        
+        container.innerHTML = `
+            <div class="order-book-container">
+                <div class="order-book-header">
+                    <div>
+                        <div class="order-book-title">Order Book</div>
+                        <div class="order-book-ticker">${data.ticker}</div>
+                    </div>
+                    <div style="text-align: right;">
+                        <div style="font-size: 14px; color: #6b7280; margin-bottom: 4px;">Current Price</div>
+                        <div style="font-size: 24px; font-weight: 700; color: #1f2937;">$${data.current_price.toFixed(2)}</div>
+                        <div style="font-size: 12px; color: #6b7280;">Spread: $${data.spread.toFixed(2)} (${data.spread_pct.toFixed(2)}%)</div>
+                    </div>
+                </div>
+                
+                ${signal ? `
+                <div style="margin-bottom: 16px; padding: 12px; background: #f9fafb; border-radius: 8px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <span class="signal-badge ${signal.signal.toLowerCase().replace(' ', '-')}">${signal.signal}</span>
+                            <span style="margin-left: 12px; color: #6b7280; font-size: 14px;">Confidence: ${signal.confidence}%</span>
+                        </div>
+                    </div>
+                    <div style="margin-top: 8px; font-size: 13px; color: #4b5563;">${signal.reasoning}</div>
+                </div>
+                ` : ''}
+                
+                <div class="order-book-grid">
+                    <div class="order-book-side">
+                        <div class="order-book-side-header bids-header">
+                            📈 Bids (Buy Orders)
+                        </div>
+                        <div class="order-book-levels">
+                            ${data.bids.map(bid => {
+                                const widthPct = (bid.value / maxValue) * 100;
+                                return `
+                                    <div class="order-level bid-level">
+                                        <div class="order-level-bg" style="width: ${widthPct}%"></div>
+                                        <div class="order-price">$${bid.price.toFixed(2)}</div>
+                                        <div class="order-quantity">${bid.quantity.toLocaleString()}</div>
+                                        <div class="order-value">$${bid.value.toLocaleString()}</div>
+                                    </div>
+                                `;
+                            }).join('')}
+                        </div>
+                    </div>
+                    
+                    <div class="order-book-side">
+                        <div class="order-book-side-header asks-header">
+                            📉 Asks (Sell Orders)
+                        </div>
+                        <div class="order-book-levels">
+                            ${data.asks.map(ask => {
+                                const widthPct = (ask.value / maxValue) * 100;
+                                return `
+                                    <div class="order-level ask-level">
+                                        <div class="order-level-bg" style="width: ${widthPct}%"></div>
+                                        <div class="order-price">$${ask.price.toFixed(2)}</div>
+                                        <div class="order-quantity">${ask.quantity.toLocaleString()}</div>
+                                        <div class="order-value">$${ask.value.toLocaleString()}</div>
+                                    </div>
+                                `;
+                            }).join('')}
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="pressure-indicator">
+                    <div style="font-size: 14px; font-weight: 600; color: #6b7280; min-width: 100px;">Market Pressure:</div>
+                    <div class="pressure-bar">
+                        <div class="pressure-marker" style="left: ${((analysis.imbalance_ratio + 1) / 2) * 100}%"></div>
+                    </div>
+                    <div class="pressure-label ${analysis.imbalance_ratio > 0.05 ? 'buy' : analysis.imbalance_ratio < -0.05 ? 'sell' : 'neutral'}">
+                        ${analysis.pressure}
+                    </div>
+                </div>
+                
+                <div class="order-book-summary">
+                    <div class="summary-card buy">
+                        <div class="summary-label">Total Bid Volume</div>
+                        <div class="summary-value">${analysis.total_bid_quantity.toLocaleString()}</div>
+                        <div style="font-size: 12px; color: #6b7280; margin-top: 4px;">$${analysis.total_bid_value.toLocaleString()}</div>
+                    </div>
+                    
+                    <div class="summary-card sell">
+                        <div class="summary-label">Total Ask Volume</div>
+                        <div class="summary-value">${analysis.total_ask_quantity.toLocaleString()}</div>
+                        <div style="font-size: 12px; color: #6b7280; margin-top: 4px;">$${analysis.total_ask_value.toLocaleString()}</div>
+                    </div>
+                    
+                    <div class="summary-card">
+                        <div class="summary-label">Volume Imbalance</div>
+                        <div class="summary-value" style="color: ${analysis.imbalance_ratio > 0 ? '#10b981' : '#ef4444'}">
+                            ${analysis.imbalance_pct > 0 ? '+' : ''}${analysis.imbalance_pct.toFixed(2)}%
+                        </div>
+                        <div style="font-size: 12px; color: #6b7280; margin-top: 4px;">
+                            ${analysis.quantity_imbalance > 0 ? '+' : ''}${analysis.quantity_imbalance.toLocaleString()} shares
+                        </div>
+                    </div>
+                    
+                    <div class="summary-card">
+                        <div class="summary-label">Depth Ratio (Top 5)</div>
+                        <div class="summary-value">${analysis.depth_ratio.toFixed(3)}</div>
+                        <div style="font-size: 12px; color: #6b7280; margin-top: 4px;">
+                            Bid: $${analysis.bid_depth_5.toLocaleString()} / Ask: $${analysis.ask_depth_5.toLocaleString()}
+                        </div>
+                    </div>
+                </div>
+                
+                <div style="margin-top: 16px; text-align: center;">
+                    <button class="refresh-button" onclick="refreshOrderBook('${data.ticker}', '${containerId}')">
+                        🔄 Refresh Order Book
+                    </button>
+                    <button class="refresh-button" onclick="toggleAutoRefresh('${data.ticker}', '${containerId}')" style="margin-left: 8px;">
+                        ⏱️ Auto-Refresh (5s)
+                    </button>
+                </div>
+                
+                <div style="margin-top: 12px; text-align: center; font-size: 12px; color: #9ca3af;">
+                    Last updated: ${new Date(data.timestamp).toLocaleTimeString()}
+                </div>
+            </div>
+        `;
+    }
+    
+    async function refreshOrderBook(ticker, containerId) {
+        const button = event.target;
+        button.disabled = true;
+        button.textContent = '⏳ Loading...';
+        
+        const data = await fetchOrderBook(ticker, 10);
+        if (data) {
+            renderOrderBook(data, containerId);
+        }
+        
+        button.disabled = false;
+        button.textContent = '🔄 Refresh Order Book';
+    }
+    
+    function toggleAutoRefresh(ticker, containerId) {
+        if (orderBookRefreshInterval) {
+            clearInterval(orderBookRefreshInterval);
+            orderBookRefreshInterval = null;
+            event.target.textContent = '⏱️ Auto-Refresh (5s)';
+            event.target.style.background = '#3b82f6';
+        } else {
+            orderBookRefreshInterval = setInterval(async () => {
+                const data = await fetchOrderBook(ticker, 10);
+                if (data) {
+                    renderOrderBook(data, containerId);
+                }
+            }, 5000);
+            event.target.textContent = '⏸️ Stop Auto-Refresh';
+            event.target.style.background = '#ef4444';
+        }
+    }
+    
+    // Example usage:
+    // <div id="orderBookContainer"></div>
+    // <script>
+    //   fetchOrderBook('AAPL', 10).then(data => {
+    //     renderOrderBook(data, 'orderBookContainer');
+    //   });
+    // </script>
+</script>

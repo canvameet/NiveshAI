@@ -1,11 +1,11 @@
-# 🏆 Market Movement Classifier - Hackathon Presentation Summary
+# 🏆 NiveshAI - Hackathon Presentation Summary
 
 ## 🎯 Problem Statement Alignment
 
 **Problem:** Train a classification model using historical time-series data (30-day stock prices) to predict whether the next day's closing value will be UP or DOWN (binary classification).
 
 **✅ Our Solution:**
-- ✅ Binary classification (UP/DOWN) using 2 years of historical data
+- ✅ Binary classification (UP/DOWN) using 5 years of historical data
 - ✅ Next-day prediction (1-day forward horizon)
 - ✅ XGBoost classifier with comprehensive feature engineering
 - ✅ Python implementation with Pandas for feature engineering
@@ -209,7 +209,7 @@ python3 app.py
 ## 📞 Contact & Demo
 
 **Team:** Meet and Jaimin  
-**Project:** Market Movement Classifier  
+**Project:** NiveshAI  
 **Category:** ML Classification + SDG Alignment
 
 **Quick Demo:**
@@ -236,4 +236,5 @@ python3 main.py --category SDG_CLEAN_ENERGY
 ---
 
 **Built with ❤️ for the Hackathon** 🚀
+
 

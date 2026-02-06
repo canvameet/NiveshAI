@@ -63,8 +63,12 @@ _macro_calendar_cache = {'events': [], 'timestamp': 0}
 NEWS_API_URL = 'https://financialmodelingprep.com/api/v3/stock_news'
 NEWS_API_KEY = os.environ.get('FINANCIAL_NEWS_API_KEY', 'demo')
 NEWS_MAX_ARTICLES = 6
-POSITIVE_NEWS_KEYWORDS = ['surge', 'beat', 'growth', 'upgrade', 'soar', 'bull', 'record', 'tops', 'boost', 'rally', 'expands']
-NEGATIVE_NEWS_KEYWORDS = ['plunge', 'miss', 'lawsuit', 'downgrade', 'cuts', 'slump', 'bear', 'drop', 'selloff', 'warning', 'halt']
+POSITIVE_NEWS_KEYWORDS = ['surge', 'beat', 'growth', 'upgrade', 'soar', 'bull', 'record', 'tops', 'boost', 'rally', 'expands', 
+                          'profit', 'gain', 'rise', 'jump', 'strong', 'outperform', 'breakthrough', 'success', 'positive', 
+                          'exceeds', 'momentum', 'bullish', 'optimistic', 'innovation', 'partnership', 'acquisition', 'revenue']
+NEGATIVE_NEWS_KEYWORDS = ['plunge', 'miss', 'lawsuit', 'downgrade', 'cuts', 'slump', 'bear', 'drop', 'selloff', 'warning', 'halt',
+                          'loss', 'decline', 'fall', 'weak', 'underperform', 'concern', 'risk', 'negative', 'disappointing',
+                          'bearish', 'pessimistic', 'investigation', 'scandal', 'bankruptcy', 'debt', 'layoff', 'recession']
 MACRO_SYMBOL = '^VIX'
 
 def get_current_price(ticker):
@@ -89,7 +93,7 @@ def get_currency_symbol(ticker):
         return '$'
 
 def fetch_recent_news(ticker, limit=NEWS_MAX_ARTICLES):
-    """Fetch news with Google News RSS fallback"""
+    """Fetch most recent news with Google News RSS fallback"""
     if not ticker:
         return []
     
@@ -113,16 +117,21 @@ def fetch_recent_news(ticker, limit=NEWS_MAX_ARTICLES):
                         'published': article.get('publishedDate') or article.get('date'),
                         'text': article.get('text') or article.get('content') or article.get('summary')
                     })
+                print(f"  ✓ Fetched {len(normalized)} articles from Financial API for {ticker}")
                 return normalized
     except Exception as e:
         print(f"  Financial Modeling Prep API failed for {ticker}: {e}")
     
-    # Fallback to Google News RSS
+    # Fallback to Google News RSS (prioritize recent news)
     try:
         import feedparser
+        from datetime import datetime, timedelta
+        
         # Clean ticker for search query
         clean_ticker = ticker.replace('.NS', '').replace('.BO', '').replace('.', ' ')
-        google_news_url = f'https://news.google.com/rss/search?q={clean_ticker}+stock&hl=en-US&gl=US&ceid=US:en'
+        
+        # Add time filter for recent news (last 7 days)
+        google_news_url = f'https://news.google.com/rss/search?q={clean_ticker}+stock+when:7d&hl=en-US&gl=US&ceid=US:en'
         
         feed = feedparser.parse(google_news_url)
         normalized = []
@@ -483,6 +492,53 @@ def build_prediction_entry(ticker, result, sdg_alignment=None, macro_context=Non
     news_articles = fetch_recent_news(ticker)
     news_mood_score = compute_news_mood(news_articles)
     mood_label = get_mood_label(news_mood_score)
+    
+    # Adjust prediction confidence based on news sentiment
+    # If news sentiment aligns with prediction, boost confidence
+    # If news sentiment contradicts prediction, reduce confidence
+    original_confidence = pred.get('confidence', 0)
+    sentiment_alignment = news_mood_score if entry['isPositive'] else -news_mood_score
+    
+    # Apply news sentiment adjustment (max ±15% confidence adjustment)
+    confidence_adjustment = sentiment_alignment * 0.15
+    adjusted_confidence = original_confidence + confidence_adjustment
+    adjusted_confidence = max(0.0, min(1.0, adjusted_confidence))  # Clamp between 0 and 1
+    
+    # Update confidence with news-adjusted value
+    entry['confidence'] = round(adjusted_confidence * 100, 1)
+    entry['originalConfidence'] = round(original_confidence * 100, 1)
+    entry['newsConfidenceAdjustment'] = round(confidence_adjustment * 100, 1)
+    
+    # Adjust estimated price based on news sentiment
+    # Strong positive news can push price higher, strong negative news can push it lower
+    if entry['currentPrice'] and entry['estimatedPrice']:
+        original_estimated_price = entry['estimatedPrice']
+        
+        # Calculate news-based price adjustment (max ±5% price adjustment based on sentiment)
+        # Sentiment ranges from -1 to +1, so we scale it to a percentage
+        news_price_adjustment_pct = news_mood_score * 0.05  # Max 5% adjustment
+        
+        # Apply adjustment in the direction of the prediction
+        if entry['isPositive']:
+            # For UP predictions, positive news amplifies the gain, negative news dampens it
+            adjusted_estimated_price = original_estimated_price * (1 + news_price_adjustment_pct)
+        else:
+            # For DOWN predictions, negative news amplifies the drop, positive news dampens it
+            adjusted_estimated_price = original_estimated_price * (1 - news_price_adjustment_pct)
+        
+        # Update the estimated price
+        entry['estimatedPrice'] = round(adjusted_estimated_price, 2)
+        entry['originalEstimatedPrice'] = round(original_estimated_price, 2)
+        entry['newsPriceAdjustment'] = round((adjusted_estimated_price - original_estimated_price), 2)
+        entry['newsPriceAdjustmentPct'] = round(news_price_adjustment_pct * 100, 2)
+        
+        # Recalculate expected change percentage with news-adjusted price
+        try:
+            expected_change = ((entry['estimatedPrice'] - entry['currentPrice']) / entry['currentPrice']) * 100
+            entry['expectedChangePct'] = round(expected_change, 2)
+        except ZeroDivisionError:
+            entry['expectedChangePct'] = None
+    
     entry['newsMoodScore'] = round(news_mood_score, 2)
     entry['newsMoodLabel'] = mood_label['label']
     entry['newsMoodColor'] = mood_label['color']
@@ -824,14 +880,14 @@ def create_price_history_chart(pipeline_result, as_data_uri=True):
             if ticker_df is not None and 'Close' in ticker_df.columns:
                 plt.plot(ticker_df.index, ticker_df['Close'], linewidth=2)
                 ticker_name = pipeline_result.get('ticker', 'Stock')
-                plt.title(f'{ticker_name} Price History (Last 2 Years)')
+                plt.title(f'{ticker_name} Price History (Last 5 Years)')
         
         if len(plt.gca().get_lines()) == 0:
             # No data plotted, create empty chart
             plt.text(0.5, 0.5, 'No price data available', 
                     ha='center', va='center', transform=plt.gca().transAxes)
         
-        plt.title('Price History (Last 2 Years)')
+        plt.title('Price History (Last 5 Years)')
         plt.xlabel('Date')
         plt.ylabel('Price')
         if len(plt.gca().get_lines()) > 0:
@@ -991,7 +1047,7 @@ def download_report():
                 zip_file.writestr('metrics.csv', metrics_df.to_csv(index=False))
             
             summary_lines = [
-                "Market Movement Classifier Report",
+                "NiveshAI Report",
                 f"Tickers: {', '.join(tickers)}",
                 f"Generated: {datetime.utcnow().isoformat()}Z",
                 f"Models trained: {payload['metadata']['models_trained']}",
@@ -1199,7 +1255,7 @@ if __name__ == '__main__':
     
     
     print("="*70)
-    print("MARKET MOVEMENT CLASSIFIER API SERVER")
+    print("NIVESHAI API SERVER")
     print("="*70)
     print("API Endpoints:")
     print("  POST /api/predict              - Predict custom tickers")
