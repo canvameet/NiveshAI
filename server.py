@@ -1,4 +1,4 @@
-from flask import Flask, jsonify, request, send_file
+from flask import Flask, jsonify, request, send_file, render_template
 from flask_cors import CORS
 import sys
 import os
@@ -35,7 +35,10 @@ except Exception as e:
     traceback.print_exc()
     sys.exit(1)
 
-app = Flask(__name__)
+app = Flask(__name__, 
+            template_folder='templates',
+            static_folder='static',
+            static_url_path='/static')
 CORS(app)
 
 models_cache = {}
@@ -70,6 +73,24 @@ NEGATIVE_NEWS_KEYWORDS = ['plunge', 'miss', 'lawsuit', 'downgrade', 'cuts', 'slu
                           'loss', 'decline', 'fall', 'weak', 'underperform', 'concern', 'risk', 'negative', 'disappointing',
                           'bearish', 'pessimistic', 'investigation', 'scandal', 'bankruptcy', 'debt', 'layoff', 'recession']
 MACRO_SYMBOL = '^VIX'
+
+# ==========================================
+# FRONTEND ROUTES
+# ==========================================
+
+@app.route('/')
+def index():
+    """Serve the main web interface"""
+    return render_template('index.html')
+
+@app.route('/static/<path:path>')
+def serve_static(path):
+    """Serve static files"""
+    return send_from_directory('static', path)
+
+# ==========================================
+# HELPER FUNCTIONS
+# ==========================================
 
 def get_current_price(ticker):
     try:
@@ -426,10 +447,6 @@ def derive_investment_opinion(prediction_payload, ticker_df=None, current_price=
     expected_move_pct = None
     if estimated_price and current_price and current_price > 0:
         expected_move_pct = ((estimated_price - current_price) / current_price) * 100
-    elif direction in ('UP', 'DOWN'):
-        # bias = prob_up - prob_down
-        # expected_move_pct = bias * 5  # heuristic scale - REMOVED to avoid fake precision
-        expected_move_pct = None
     
     risk_level, volatility_pct = compute_risk_level(ticker_df)
     
@@ -494,15 +511,13 @@ def build_prediction_entry(ticker, result, sdg_alignment=None, macro_context=Non
     mood_label = get_mood_label(news_mood_score)
     
     # Adjust prediction confidence based on news sentiment
-    # If news sentiment aligns with prediction, boost confidence
-    # If news sentiment contradicts prediction, reduce confidence
     original_confidence = pred.get('confidence', 0)
     sentiment_alignment = news_mood_score if entry['isPositive'] else -news_mood_score
     
     # Apply news sentiment adjustment (max ±15% confidence adjustment)
     confidence_adjustment = sentiment_alignment * 0.15
     adjusted_confidence = original_confidence + confidence_adjustment
-    adjusted_confidence = max(0.0, min(1.0, adjusted_confidence))  # Clamp between 0 and 1
+    adjusted_confidence = max(0.0, min(1.0, adjusted_confidence))
     
     # Update confidence with news-adjusted value
     entry['confidence'] = round(adjusted_confidence * 100, 1)
@@ -510,29 +525,20 @@ def build_prediction_entry(ticker, result, sdg_alignment=None, macro_context=Non
     entry['newsConfidenceAdjustment'] = round(confidence_adjustment * 100, 1)
     
     # Adjust estimated price based on news sentiment
-    # Strong positive news can push price higher, strong negative news can push it lower
     if entry['currentPrice'] and entry['estimatedPrice']:
         original_estimated_price = entry['estimatedPrice']
+        news_price_adjustment_pct = news_mood_score * 0.05
         
-        # Calculate news-based price adjustment (max ±5% price adjustment based on sentiment)
-        # Sentiment ranges from -1 to +1, so we scale it to a percentage
-        news_price_adjustment_pct = news_mood_score * 0.05  # Max 5% adjustment
-        
-        # Apply adjustment in the direction of the prediction
         if entry['isPositive']:
-            # For UP predictions, positive news amplifies the gain, negative news dampens it
             adjusted_estimated_price = original_estimated_price * (1 + news_price_adjustment_pct)
         else:
-            # For DOWN predictions, negative news amplifies the drop, positive news dampens it
             adjusted_estimated_price = original_estimated_price * (1 - news_price_adjustment_pct)
         
-        # Update the estimated price
         entry['estimatedPrice'] = round(adjusted_estimated_price, 2)
         entry['originalEstimatedPrice'] = round(original_estimated_price, 2)
         entry['newsPriceAdjustment'] = round((adjusted_estimated_price - original_estimated_price), 2)
         entry['newsPriceAdjustmentPct'] = round(news_price_adjustment_pct * 100, 2)
         
-        # Recalculate expected change percentage with news-adjusted price
         try:
             expected_change = ((entry['estimatedPrice'] - entry['currentPrice']) / entry['currentPrice']) * 100
             entry['expectedChangePct'] = round(expected_change, 2)
@@ -568,7 +574,6 @@ def prepare_prediction_payload(tickers):
         return None
 
     peers_by_ticker, peer_candidates = expand_with_peers(tickers)
-    # Disable automatic peer expansion for training to honor user input.
     all_tickers = list(dict.fromkeys(tickers))
     pipeline_result = get_or_create_model(all_tickers)
     if not pipeline_result:
@@ -724,7 +729,6 @@ def write_visualizations_to_zip(zip_file, ticker, viz_bundle):
         if not blob:
             continue
         zip_file.writestr(f'visualizations/{ticker}/{filename}', blob)
-    # Save metrics JSON snapshot for convenience
     metrics_payload = viz_bundle.get('metrics')
     if metrics_payload:
         zip_file.writestr(f'visualizations/{ticker}/metrics.json', json.dumps(metrics_payload, indent=2))
@@ -739,7 +743,6 @@ def get_or_create_model(tickers):
                 return models_cache[ticker_key]
         
         print(f"Running main pipeline for: {ticker_key}")
-        # Use the clean function from main.py - trains separate model for each ticker
         result = train_and_predict(tickers, category='CUSTOM', train_per_ticker=True)
         
         if result:
@@ -843,7 +846,6 @@ def create_price_history_chart(pipeline_result, as_data_uri=True):
     try:
         tickers = pipeline_result.get('tickers', [])
         if not tickers:
-            # Try to get from loader
             loader = pipeline_result.get('loader')
             if loader and hasattr(loader, 'tickers'):
                 tickers = loader.tickers
@@ -859,14 +861,12 @@ def create_price_history_chart(pipeline_result, as_data_uri=True):
                     if loader and hasattr(loader, 'get_ticker_data'):
                         ticker_df = loader.get_ticker_data(ticker)
                     else:
-                        # Try to extract from raw_data directly
                         if isinstance(raw_data.columns, pd.MultiIndex):
                             ticker_df = raw_data[ticker].copy()
                         else:
                             cols = [col for col in raw_data.columns if ticker in str(col)]
                             ticker_df = raw_data[cols].copy()
                             if 'Close' not in ticker_df.columns and len(ticker_df.columns) > 0:
-                                # Use first column as Close
                                 ticker_df['Close'] = ticker_df.iloc[:, 0]
                     
                     if not ticker_df.empty and 'Close' in ticker_df.columns:
@@ -875,7 +875,6 @@ def create_price_history_chart(pipeline_result, as_data_uri=True):
                     print(f"  Warning: Could not plot {ticker}: {e}")
                     continue
         else:
-            # Fallback: try to plot from ticker_df if available
             ticker_df = pipeline_result.get('ticker_df')
             if ticker_df is not None and 'Close' in ticker_df.columns:
                 plt.plot(ticker_df.index, ticker_df['Close'], linewidth=2)
@@ -883,7 +882,6 @@ def create_price_history_chart(pipeline_result, as_data_uri=True):
                 plt.title(f'{ticker_name} Price History (Last 5 Years)')
         
         if len(plt.gca().get_lines()) == 0:
-            # No data plotted, create empty chart
             plt.text(0.5, 0.5, 'No price data available', 
                     ha='center', va='center', transform=plt.gca().transAxes)
         
@@ -912,13 +910,11 @@ def create_price_history_chart(pipeline_result, as_data_uri=True):
 
 def create_returns_distribution_chart(pipeline_result, as_data_uri=True):
     try:
-        # Try to get data from different possible structures
         combined_df = pipeline_result.get('combined_df')
         ticker_df = pipeline_result.get('ticker_df')
         primary_ticker = pipeline_result.get('primary_ticker')
         ticker = pipeline_result.get('ticker')
         
-        # Determine which dataframe and ticker to use
         if combined_df is not None and primary_ticker:
             df = combined_df
             ticker_name = primary_ticker
@@ -962,6 +958,10 @@ def create_returns_distribution_chart(pipeline_result, as_data_uri=True):
         print(f"  Warning: Returns distribution chart failed: {e}")
         return None
 
+# ==========================================
+# API ROUTES
+# ==========================================
+
 @app.route('/api/predict', methods=['POST'])
 def predict():
     try:
@@ -1000,7 +1000,6 @@ def get_visualizations():
         if not pipeline_result:
             return jsonify({'error': 'Model not found or failed to train'}), 500
         
-        # Handle per-ticker results (new format)
         if pipeline_result.get('train_per_ticker') and 'results' in pipeline_result:
             primary_ticker = next((t for t in tickers if t in pipeline_result['results']), None)
             if not primary_ticker:
@@ -1009,7 +1008,6 @@ def get_visualizations():
             metrics = result['metrics']
             visualizations = build_visualization_bundle(primary_ticker, result, metrics, combined=False, as_data_uri=True)
         else:
-            # Handle legacy format (single combined model)
             metrics = pipeline_result.get('metrics', {})
             if not metrics:
                 return jsonify({'error': 'No metrics found in pipeline result'}), 500
@@ -1115,7 +1113,6 @@ def get_orderbook(ticker):
     try:
         import yfinance as yf
         
-        # Fetch current price
         stock = yf.Ticker(ticker)
         hist = stock.history(period='1d')
         
@@ -1124,8 +1121,7 @@ def get_orderbook(ticker):
         
         current_price = float(hist['Close'].iloc[-1])
         
-        # Generate realistic order book data
-        spread = current_price * 0.0001  # 0.01% spread
+        spread = current_price * 0.0001
         
         asks = []
         bids = []
@@ -1146,7 +1142,6 @@ def get_orderbook(ticker):
                 'total': 0
             })
         
-        # Calculate cumulative totals
         ask_total = 0
         for ask in asks:
             ask_total += ask['size']
@@ -1159,8 +1154,8 @@ def get_orderbook(ticker):
         
         return jsonify({
             'ticker': ticker,
-            'asks': list(reversed(asks[:5])),  # Top 5, highest first
-            'bids': bids[:5],  # Top 5, highest first
+            'asks': list(reversed(asks[:5])),
+            'bids': bids[:5],
             'spread': asks[0]['price'] - bids[0]['price'],
             'currentPrice': current_price,
             'timestamp': datetime.now().isoformat()
@@ -1185,12 +1180,11 @@ def get_popular_stocks():
         market = data.get('market', 'mixed')
         count = min(data.get('count', 4), 10)
         
-        # Define popular tickers by market
         if market == 'us':
             tickers = ['AAPL', 'MSFT', 'GOOGL', 'NVDA', 'TSLA', 'AMZN']
         elif market == 'india':
             tickers = ['RELIANCE.NS', 'TCS.NS', 'INFY.NS', 'HDFCBANK.NS', 'ITC.NS']
-        else:  # mixed
+        else:
             tickers = ['AAPL', 'RELIANCE.NS', 'TCS.NS', 'INFY.NS']
         
         stocks = []
@@ -1206,9 +1200,8 @@ def get_popular_stocks():
                 prev_price = float(hist['Close'].iloc[-2])
                 change_percent = ((current_price - prev_price) / prev_price) * 100
                 
-                # Simple prediction based on recent trend
                 prediction = 'UP' if change_percent > 0 else 'DOWN'
-                confidence = min(abs(change_percent) * 10 + 50, 99)  # Simple confidence heuristic
+                confidence = min(abs(change_percent) * 10 + 50, 99)
                 
                 currency = get_currency_symbol(ticker)
                 
@@ -1251,27 +1244,23 @@ def get_macro_events():
 
 
 if __name__ == '__main__':
-    
-    
-    
     print("="*70)
-    print("NIVESHAI API SERVER")
+    print("NIVESHAI - UNIFIED SERVER (API + FRONTEND)")
     print("="*70)
-    print("API Endpoints:")
+    print("Frontend: http://0.0.0.0:5000/")
+    print("\nAPI Endpoints:")
     print("  POST /api/predict              - Predict custom tickers")
-    print("  POST /api/popular-stocks       - Get popular stocks with real data")
-    print("  GET  /api/macro-events         - Get macro calendar events")
-    print("  POST /api/visualizations       - Get model visualizations")
-    print("  GET  /api/categories           - List all categories")
+    print("  POST /api/popular-stocks       - Get popular stocks")
+    print("  GET  /api/macro-events         - Get macro calendar")
+    print("  POST /api/visualizations       - Get visualizations")
+    print("  GET  /api/categories           - List categories")
     print("  GET  /api/health               - Health check")
-    print("  POST /api/clear-cache          - Clear model cache")
-    print("="*70)
-    print("\nServer starting on http://0.0.0.0:5000")
-    print("Frontend should connect to: http://localhost:5000/api")
+    print("  POST /api/clear-cache          - Clear cache")
     print("="*70 + "\n")
     
     try:
-        app.run(debug=False, host='0.0.0.0', port=5000, threaded=True)
+        port = int(os.environ.get('PORT', 5000))
+        app.run(debug=False, host='0.0.0.0', port=port, threaded=True)
     except Exception as e:
         print(f"Fatal error starting server: {e}")
         import traceback
