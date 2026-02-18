@@ -534,9 +534,5 @@ Airport School, Ahmedabad (Gujarat)
 
 ---
 
-## 16. Links  
-**GitHub Repository:**  
-https://github.com/jai-git4208/market-classifier  
-
-Built with ❤️ by **Meet Ratwani  & Jaimin Pansal**  
+Built with ❤️ by **Meet Ratwani *  
 
